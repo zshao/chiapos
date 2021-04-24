@@ -53,7 +53,8 @@ namespace QuickSort {
         uint64_t lo = begin;
         uint64_t hi = end - 1;
 
-        memcpy(pivot_space, memory + (hi * L), L);
+        // Pick the pivot from the middle to minimize the risks of imbalance
+        memcpy(pivot_space, memory + ((hi + lo) / 2 * L), L);
         bool left_side = true;
 
         while (lo < hi) {
@@ -106,7 +107,8 @@ namespace QuickSort {
         uint64_t lo = begin;
         uint64_t hi = end - 1;
 
-        memcpy(pivot_space, memory + (hi * L), L);
+        // Pick the pivot from the middle to minimize the risks of imbalance
+        memcpy(pivot_space, memory + ((hi + lo) / 2 * L), L);
         bool left_side = true;
 
         while (lo < hi) {
