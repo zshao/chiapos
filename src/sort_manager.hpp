@@ -53,7 +53,8 @@ public:
         const std::string &filename,
         uint32_t begin_bits,
         uint64_t const stripe_size,
-        strategy_t const sort_strategy = strategy_t::uniform)
+        strategy_t const sort_strategy = strategy_t::uniform,
+        uint32_t num_threads = 1)
         : memory_size_(memory_size)
         , entry_size_(entry_size)
         , begin_bits_(begin_bits)
@@ -63,6 +64,7 @@ public:
         // 7 bytes head-room for SliceInt64FromBytes()
         , entry_buf_(new uint8_t[entry_size + 7])
         , strategy_(sort_strategy)
+        , num_threads_(num_threads)
     {
         // Cross platform way to concatenate paths, gulrak library.
         std::vector<fs::path> bucket_filenames = std::vector<fs::path>();
@@ -259,6 +261,7 @@ private:
     uint64_t next_bucket_to_sort = 0;
     std::unique_ptr<uint8_t[]> entry_buf_;
     strategy_t strategy_;
+    uint32_t num_threads_;
 
     void SortBucket()
     {
@@ -317,7 +320,7 @@ private:
                       << "GiB, qs min: " << qs_ram << "GiB. force_qs: " << force_quicksort
                       << std::endl;
             b.underlying_file.Read(0, memory_start_.get(), bucket_entries * entry_size_);
-            QuickSort::Sort(memory_start_.get(), entry_size_, bucket_entries, begin_bits_ + log_num_buckets_);
+            QuickSort::SortNThreads(memory_start_.get(), entry_size_, bucket_entries, begin_bits_ + log_num_buckets_, num_threads_);
         }
 
         // Deletes the bucket file
