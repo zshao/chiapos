@@ -308,7 +308,7 @@ namespace Util {
     /*
      * Like memcmp, but only compares starting at a certain bit.
      */
-    inline int MemCmpBits(
+    inline int MemCmpBitsSlow(
         uint8_t *left_arr,
         uint8_t *right_arr,
         uint32_t len,
@@ -326,6 +326,146 @@ namespace Util {
         }
         return 0;
     }
+
+    /*
+     * Like memcmp, but only compares starting at a certain bit.
+     */
+    inline int MemCmpBits(
+        uint8_t *left_arr,
+        uint8_t *right_arr,
+        uint32_t len,
+        uint32_t bits_begin)
+    {
+        // Ignore the first (bits_begin / 8) bytes
+        // Modify params accordingly which ensures 0 <= bits_begin < 8
+        {
+            uint32_t start_byte = bits_begin / 8;
+            left_arr += start_byte;
+            right_arr += start_byte;
+            len -= start_byte;
+            bits_begin = bits_begin % 8;
+        }
+
+        // Compare first partial byte (if there is a partial byte, e.g. bits_begin > 0)
+        // Note that 0 <= bits_begin < 8
+        if (bits_begin > 0) {
+            uint8_t mask = ((uint8_t)-1) >> bits_begin;
+            int left = left_arr[0] & mask;
+            int right = right_arr[0] & mask;
+            if (left != right) {
+                // automatic integer promotion (to int) before the minus operation
+                // See https://en.cppreference.com/w/c/language/conversion
+                return left - right;
+            }
+            // Update params
+            left_arr ++;
+            right_arr ++;
+            len --;
+            // not necessary, but for clarity
+            bits_begin = 0;
+        }
+
+        // Compare the rest, 8 bytes at a time
+        while (len >= 8) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint64_t T;
+
+            T left = __builtin_bswap64(((T *)left_arr)[0]);
+            T right = __builtin_bswap64(((T *)right_arr)[0]);
+            if (left > right) {
+                return 1;
+            } else if (left < right) {
+                return -1;
+            }
+            left_arr += sizeof(T);
+            right_arr += sizeof(T);
+            len -= sizeof(T);
+        }
+
+        // Compare the rest, 4 bytes at a time
+        // assert (len < 8)
+        if (len >= 4) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint32_t T;
+
+            T left = __builtin_bswap32(((T *)left_arr)[0]);
+            T right = __builtin_bswap32(((T *)right_arr)[0]);
+            if (left > right) {
+                return 1;
+            } else if (left < right) {
+                return -1;
+            }
+            left_arr += sizeof(T);
+            right_arr += sizeof(T);
+            len -= sizeof(T);
+        }
+
+        // Compare the next, 2 byte at a time
+        // assert (len < 4)
+        if (len >= 2) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint16_t T;
+
+            T left = __builtin_bswap16(((T *)left_arr)[0]);
+            T right = __builtin_bswap16(((T *)right_arr)[0]);
+            if (left != right) {
+                // automatic integer promotion (to int) before the minus operation
+                // See https://en.cppreference.com/w/c/language/conversion
+                return left - right;
+            }
+            left_arr += sizeof(T);
+            right_arr += sizeof(T);
+            len -= sizeof(T);
+        }
+
+        // Compare the next, 1 byte at a time
+        // assert (len < 2)
+        if (len >= 1) {
+            // Define T to avoid copy&paste bugs.
+            typedef uint8_t T;
+
+            T left = ((T *)left_arr)[0];
+            T right = ((T *)right_arr)[0];
+            if (left != right) {
+                // automatic integer promotion (to int) before the minus operation
+                // See https://en.cppreference.com/w/c/language/conversion
+                return left - right;
+            }
+            // Not necessary at this point
+            // left_arr += sizeof(T);
+            // right_arr += sizeof(T);
+            // len -= sizeof(T);
+        }
+
+        // Nothing left to compare
+        return 0;
+    }
+
+    inline int MemCmpBitsValidate(
+        uint8_t *left_arr,
+        uint8_t *right_arr,
+        uint32_t len,
+        uint32_t bits_begin)
+    {
+        int slow = MemCmpBitsSlow(left_arr, right_arr, len, bits_begin);
+        int fast = MemCmpBits(left_arr, right_arr, len, bits_begin);
+        if (slow < 0 && fast < 0) {
+            return -1;
+        }
+        if (slow > 0 && fast > 0) {
+            return 1;
+        }
+        if (slow == 0 && fast == 0) {
+            return 0;
+        }
+        std::cout << "Error: Slow = " << slow << " Fast = " << fast << " len=" << len
+                  << " bits_begin=" << bits_begin << std::endl;
+        for (uint32_t i = 0; i < len; i++) {
+            std::cout << "left=" << (int)left_arr[i] << " right=" << (int)right_arr[i] << std::endl;
+        }
+        return 0;
+    }
+
 
     inline double RoundPow2(double a)
     {
