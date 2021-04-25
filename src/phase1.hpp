@@ -618,7 +618,7 @@ std::vector<uint64_t> RunPhase1(
         0,
         globals.stripe_size,
         strategy_t::uniform,
-        1);
+        num_threads);
 
     // These are used for sorting on disk. The sort on disk code needs to know how
     // many elements are in each bucket.
@@ -689,7 +689,7 @@ std::vector<uint64_t> RunPhase1(
             0,
             globals.stripe_size,
             strategy_t::uniform,
-            1);
+            num_threads);
 
         globals.L_sort_manager->TriggerNewBucket(0);
 

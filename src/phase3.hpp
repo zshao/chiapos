@@ -128,6 +128,7 @@ Phase3Results RunPhase3(
     uint64_t memory_size,
     uint32_t num_buckets,
     uint32_t log_num_buckets,
+    uint32_t const num_threads,
     const bool show_progress)
 {
     uint8_t const pos_size = k;
@@ -206,7 +207,7 @@ Phase3Results RunPhase3(
             0,
             0,
             strategy_t::quicksort_last,
-            1);
+            num_threads);
 
         bool should_read_entry = true;
         std::vector<uint64_t> left_new_pos(kCachedPositionsSize);
@@ -392,7 +393,7 @@ Phase3Results RunPhase3(
             0,
             0,
             strategy_t::quicksort_last,
-            1);
+            num_threads);
 
         std::vector<uint8_t> park_deltas;
         std::vector<uint64_t> park_stubs;

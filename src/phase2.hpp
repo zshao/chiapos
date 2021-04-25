@@ -50,6 +50,7 @@ Phase2Results RunPhase2(
     uint64_t memory_size,
     uint32_t const num_buckets,
     uint32_t const log_num_buckets,
+    uint32_t const num_threads,
     bool const show_progress)
 {
     // After pruning each table will have 0.865 * 2^k or fewer entries on
@@ -164,7 +165,7 @@ Phase2Results RunPhase2(
             uint32_t(k),
             0,
             strategy_t::quicksort_last,
-            1);
+            num_threads);
 
         // as we scan the table for the second time, we'll also need to remap
         // the positions and offsets based on the next_bitfield.

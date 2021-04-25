@@ -294,8 +294,11 @@ private:
         bool const last_bucket = (bucket_i == buckets_.size() - 1)
             || buckets_[bucket_i + 1].write_pointer == 0;
 
+        // If using 4 or more threads, automatically switch to quicksort which takes advantage of
+        // the parallism of the CPU.  This assumes that you have superfast SSD or ramfs ideally.
         bool const force_quicksort = (strategy_ == strategy_t::quicksort)
-            || (strategy_ == strategy_t::quicksort_last && last_bucket);
+            || (strategy_ == strategy_t::quicksort_last && last_bucket)
+            || (num_threads_ >= 4);
 
         // Do SortInMemory algorithm if it fits in the memory
         // (number of entries required * entry_size_) <= total memory available

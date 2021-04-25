@@ -260,7 +260,11 @@ private:
         }
         bool last_bucket = (bucket_i == this->mem_bucket_pointers.size() - 1) ||
                            this->bucket_write_pointers[bucket_i + 1] == 0;
-        bool force_quicksort = (quicksort == 1) || (quicksort == 2 && last_bucket);
+        // If using 4 or more threads, automatically switch to quicksort which takes advantage of
+        // the parallism of the CPU.  This assumes that you have superfast SSD or ramfs ideally.
+        bool force_quicksort = (quicksort == 1) || (quicksort == 2 && last_bucket) ||
+                               (num_threads >= 4);
+
         // Do SortInMemory algorithm if it fits in the memory
         // (number of entries required * entry_len_memory) <= total memory available
         if (!force_quicksort &&
