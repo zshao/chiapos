@@ -41,7 +41,8 @@ public:
         const std::string &tmp_dirname,
         const std::string &filename,
         uint32_t begin_bits,
-        uint64_t stripe_size)
+        uint64_t stripe_size,
+        uint32_t num_threads)
     {
         this->memory_start = memory;
         this->memory_size = memory_size;
@@ -54,6 +55,8 @@ public:
             2 * (stripe_size + 10 * (kBC / pow(2, kExtraBits))) * entry_size;
         this->prev_bucket_buf = new uint8_t[this->prev_bucket_buf_size]();
         this->prev_bucket_position_start = 0;
+        // num_threads is only used in quicksort
+        this->num_threads = num_threads;
         // Cross platform way to concatenate paths, gulrak library.
         std::vector<fs::path> bucket_filenames = std::vector<fs::path>();
 
@@ -208,6 +211,9 @@ private:
     uint8_t *prev_bucket_buf;
     uint64_t prev_bucket_position_start;
 
+    // num_threads is only used by quicksort
+    uint32_t num_threads;
+
     bool done;
 
     uint64_t final_position_start;
@@ -279,7 +285,7 @@ private:
                       << std::endl;
             this->bucket_files[bucket_i].Read(
                 0, this->memory_start, bucket_entries * this->entry_size);
-            QuickSort::Sort(this->memory_start, this->entry_size, bucket_entries, this->begin_bits);
+            QuickSort::SortNThreads(this->memory_start, this->entry_size, bucket_entries, this->begin_bits, num_threads);
         }
 
         // Deletes the bucket file
