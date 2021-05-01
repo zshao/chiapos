@@ -27,7 +27,6 @@ int main(int argc, char* argv[])
     int threads = (argc < 2 ? 1 : atoi(argv[1]));
     int LEN = (argc < 3 ? 10 : atoi(argv[2])) * 1000 * 1000;
 
-    int THREADS = 8;
     int* tmp = new int[LEN];
     for (int i = 0; i < LEN; i++) {
         tmp[i] = (int)((uint64_t(i) * i) % (10 * 1000 * 1000));
@@ -37,9 +36,9 @@ int main(int argc, char* argv[])
     
     bool ok = true;
     for (int i = 1; i < LEN; i++) {
-        if (tmp[i - 1] > tmp[i]) {
+        if (__builtin_bswap32(tmp[i - 1]) > __builtin_bswap32(tmp[i])) {
             std::cout << "Wrong order: " << tmp[i - 1] << " > "
-                      << "tmp[i]" << std::endl;
+                      << tmp[i] << std::endl;
             ok = false;
             break;
         }
