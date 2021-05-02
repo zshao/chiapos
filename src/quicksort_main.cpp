@@ -25,15 +25,18 @@
 int main(int argc, char* argv[])
 {
     int threads = (argc < 2 ? 1 : atoi(argv[1]));
-    int LEN = (argc < 3 ? 10 : atoi(argv[2])) * 1000 * 1000;
+    int LEN = (argc < 3 ? 50 : atoi(argv[2])) * 1000 * 1000;
 
     int* tmp = new int[LEN];
     for (int i = 0; i < LEN; i++) {
-        tmp[i] = (int)((uint64_t(i) * i) % (10 * 1000 * 1000));
+        tmp[i] = (int)((uint64_t(i) * i) % (1000 * 1000 * 1000));
     }
-    
-    QuickSort::SortNThreads((uint8_t *)tmp, 4, LEN, 0, threads);
-    
+    {
+        Timer timer;
+        QuickSort::SortNThreads((uint8_t *)tmp, 4, LEN, 0, threads);
+        timer.PrintElapsed("sort time");
+    }
+
     bool ok = true;
     for (int i = 1; i < LEN; i++) {
         if (__builtin_bswap32(tmp[i - 1]) > __builtin_bswap32(tmp[i])) {
